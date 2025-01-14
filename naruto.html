@@ -1,0 +1,308 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naruto universe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+			background-image: url('bg.png');
+			background-size: 350px; 
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #character-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .character-card {
+            width: 300px;
+            margin: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+			background-image: url('cardbg.jpg'); 
+			background-size: 150px; 
+        }
+
+        .character-card:hover {
+            transform: scale(1.5);
+        }
+
+        .character-card img {
+            width: 100%;
+            height: auto;
+        }
+
+        .character-card h2 {
+            margin: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+			background-image: url('modalbg.jpg');
+			background-size: 300px;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .close {
+            color: white;
+            float: right;
+            font-size: 100px;
+            font-weight: bold;
+            position: absolute;
+            top: -100px;
+            right: -100px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 100px;
+            color: white;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .nav-arrow:hover {
+            color: black;
+        }
+
+        .prev-arrow {
+            left: -200px;
+        }
+
+        .next-arrow {
+            right: -200px;
+        }
+		
+	
+        .search-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px;
+            margin-right: 10px;
+        }
+
+        .search-button,
+        .reset-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-button:hover,
+        .reset-button:hover {
+            background-color: #45a049;
+        }
+
+        .button-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Naruto universe</h1>
+
+    <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Enter jutsu name...">
+        <button id="search-button" class="search-button">Search</button>
+        <button id="reset-button" class="reset-button">Reset</button>
+    </div>
+
+    <div id="character-list"></div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modal-content"></div>
+            <div class="nav-arrow prev-arrow">&lt;</div>
+            <div class="nav-arrow next-arrow">&gt;</div>
+        </div>
+    </div>
+
+    <script>
+        let characterData = [];
+        let currentCharacterIndex = 0;
+
+        function fetchCharacterData(pageNumber) {
+            fetch(`https://narutodb.xyz/api/character?page=${pageNumber}&limit=20`, {
+                method: 'GET',
+                headers: {
+                    'accept': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                characterData = characterData.concat(data.characters);
+                const characterList = document.getElementById('character-list');
+                data.characters.forEach(character => {
+                    const characterElement = document.createElement('div');
+                    characterElement.classList.add('character-card');
+                    characterElement.innerHTML = `
+                        <img src="${character.images[0]}" alt="${character.name}">
+                        <h2>${character.name}</h2>
+                    `;
+                    characterElement.addEventListener('click', () => {
+                        currentCharacterIndex = characterData.findIndex(c => c.id === character.id);
+                        displayCharacterDetails(character);
+                    });
+                    characterList.appendChild(characterElement);
+                });
+
+                const currentPage = parseInt(data.currentPage);
+                const totalCharacters = parseInt(data.totalCharacters);
+                const pageSize = parseInt(data.pageSize);
+                if ((currentPage * pageSize) < totalCharacters) {
+                    fetchCharacterData(currentPage + 1);
+                }
+            })
+            .catch(error => console.error('Error fetching data:', error));
+        }
+
+        fetchCharacterData(1);
+
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeBtn = document.getElementsByClassName('close')[0];
+        const prevArrow = document.getElementsByClassName('prev-arrow')[0];
+        const nextArrow = document.getElementsByClassName('next-arrow')[0];
+
+        function displayCharacterDetails(character) {
+            modalContent.innerHTML = `
+                <img src="${character.images[0]}" alt="${character.name}">
+                <h2>${character.name}</h2>
+                <p><strong>Debut:</strong> ${character.debut.appearsIn}</p>
+                <p><strong>Jutsu:</strong> ${character.jutsu ? character.jutsu.join(', ') : 'None'}</p>
+                <p><strong>Personal:</strong> ${character.personal ? JSON.stringify(character.personal) : 'None'}</p>
+                <p><strong>Unique Traits:</strong> ${character.uniqueTraits ? character.uniqueTraits.join(', ') : 'None'}</p>
+            `;
+            modal.style.display = 'block';
+            updateNavigationArrows();
+        }
+
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        prevArrow.onclick = function() {
+            currentCharacterIndex = (currentCharacterIndex - 1 + characterData.length) % characterData.length;
+            displayCharacterDetails(characterData[currentCharacterIndex]);
+        }
+
+        nextArrow.onclick = function() {
+            currentCharacterIndex = (currentCharacterIndex + 1) % characterData.length;
+            displayCharacterDetails(characterData[currentCharacterIndex]);
+        }
+
+        function updateNavigationArrows() {
+            prevArrow.style.display = currentCharacterIndex === 0 ? 'none' : 'block';
+            nextArrow.style.display = currentCharacterIndex === characterData.length - 1 ? 'none' : 'block';
+        }
+
+        const searchButton = document.getElementById('search-button');
+        const resetButton = document.getElementById('reset-button');
+        const searchInput = document.getElementById('search-input');
+
+        searchButton.addEventListener('click', () => {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            if (searchTerm === '') return;
+
+            const filteredCharacters = characterData.filter(character =>
+                character.jutsu && character.jutsu.some(jutsu => jutsu.toLowerCase().includes(searchTerm))
+            );
+
+            const characterList = document.getElementById('character-list');
+            characterList.innerHTML = '';
+
+            filteredCharacters.forEach(character => {
+                const characterElement = document.createElement('div');
+                characterElement.classList.add('character-card');
+                characterElement.innerHTML = `
+                    <img src="${character.images[0]}" alt="${character.name}">
+                    <h2>${character.name}</h2>
+                `;
+                characterElement.addEventListener('click', () => {
+                    currentCharacterIndex = characterData.findIndex(c => c.id === character.id);
+                    displayCharacterDetails(character);
+                });
+                characterList.appendChild(characterElement);
+            });
+        });
+
+        resetButton.addEventListener('click', () => {
+            location.reload();
+        });
+    </script>
+</body>
+</html>
