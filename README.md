@@ -55,15 +55,19 @@ Once a character's details are displayed in the modal:
 
 ## ✨ Screenshots
 1. **Homepage:**
+
    ![Homepage](homepage.PNG)
    
 2. **Character Card:**
+
    ![Character Card](character-card.png)
 
 3. **Modal View:**
+
    ![Modal View](modal-view.PNG)
 
 4. **Search Results:**
+
    ![Search Results](search-results.PNG)
 
 ---
